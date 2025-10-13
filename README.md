@@ -1,6 +1,6 @@
-# WordPress Site Health Monitor Bot
+# WebWatch
 
-A comprehensive Telegram bot for monitoring the health and uptime of multiple WordPress websites, providing instant notifications for any issues.
+Monitor your WordPress sites with this Python-based Telegram bot. WebWatch checks domain availability, sends alerts, and helps you keep your sites online.
 
 ## Why This Project?
 
