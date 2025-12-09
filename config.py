@@ -23,7 +23,7 @@ class Config:
 
         # Timing and Failure Settings
         self.timeout = self._get_env_var('TIMEOUT', converter=int, default=30)
-        self.check_cycle = self._get_env_var('CHECK_CYCLE', converter=int, default=600)
+        self.check_cycle = self._get_env_var('CHECK_CYCLE', converter=int, default=3600)
         self.max_failures = self._get_env_var('MAX_FAILURES', converter=int, default=3)
         self.retry_interval = 5 # This is internal and not from .env, which is fine.
 

@@ -107,7 +107,7 @@ class DomainChecker:
         api_key_param = f"?api_key={self.config.wp_health_check_api_key}" if self.config.wp_health_check_api_key else ""
         health_check_path = "/wp-json/wp-health-check/v1/status"
 
-        # --- First, check the root domain's HTTP status ---
+        # --- First, check the root domain's HTTP status (HEAD to avoid full page fetch) ---
         urls_to_try_root = [f"https://{domain}", f"http://{domain}"]
         root_domain_is_200 = False
 
@@ -116,15 +116,25 @@ class DomainChecker:
                 logger.info(f"Stop signal received. Aborting check for {domain}.")
                 return False
 
-            logger.debug(f"Checking root domain {domain} via {url} for initial HTTP status.")
+            logger.debug(f"Checking root domain {domain} via {url} with HEAD for initial HTTP status.")
             try:
-                response = await self._client.get(url)
+                response = await self._client.head(url)
                 if response.status_code < 400:
-                    logger.debug(f"Root domain {domain} ({url}) returned HTTP {response.status_code}. Proceeding to health check.")
+                    logger.debug(f"Root domain {domain} ({url}) returned HTTP {response.status_code} on HEAD. Proceeding to health check.")
                     root_domain_is_200 = True
-                    break # Found a 200, proceed to health check
+                    break # Found a success status, proceed to health check
+                elif response.status_code == 405:
+                    logger.info(f"Root domain {domain} ({url}) does not allow HEAD. Falling back to lightweight GET.")
+                    async with self._client.stream("GET", url, follow_redirects=True) as get_response:
+                        if get_response.status_code < 400:
+                            logger.debug(f"Root domain {domain} ({url}) returned HTTP {get_response.status_code} on fallback GET.")
+                            root_domain_is_200 = True
+                            break
+                        else:
+                            logger.warning(f"Root domain {domain} ({url}) fallback GET returned server error (Status: {get_response.status_code}). Treating as failure.")
+                            return False
                 else: # 4xx or 5xx status
-                    logger.warning(f"Root domain {domain} ({url}) returned server error (Status: {response.status_code}). Treating as failure.")
+                    logger.warning(f"Root domain {domain} ({url}) returned server error on HEAD (Status: {response.status_code}). Treating as failure.")
                     return False # Server error, consider it down.
             except httpx.TimeoutException:
                 logger.warning(f"Root domain {domain} ({url}) timed out after {self.config.timeout}s. Treating as failure.")

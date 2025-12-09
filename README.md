@@ -12,7 +12,7 @@ This bot was created to solve that problem. It not only checks if a site is reac
 
 - **Multi-Domain Monitoring**: Fetches a list of domains from a dynamic API endpoint.
 - **Dual-Layer Health Check**:
-    1.  Checks the domain's root HTTP status.
+    1.  Checks the domain's root HTTP status with a HEAD request (no full page download; falls back to a lightweight GET only if HEAD is blocked).
     2.  If the site is up, it queries a dedicated WordPress health check endpoint to ensure the application is healthy.
 - **Instant Telegram Alerts**: Sends immediate notifications to authorized admins when a site becomes unreachable or recovers.
 - **Smart Retries**: Implements a retry mechanism to avoid false positives from temporary network glitches.
@@ -79,7 +79,7 @@ This bot was created to solve that problem. It not only checks if a site is reac
 | `ADMIN_PHONE_NUMBERS`     | A JSON-formatted list of admin phone numbers in international format. These users will receive alerts.                                   | `["+15551234567", "+442071234567"]`             |
 | `DOMAINS_API`             | The API endpoint that returns a JSON list of domains to monitor.                                                                         | `https://api.example.com/sites`                |
 | `WP_HEALTH_CHECK_API_KEY` | (Optional) The API key to access the WordPress health check endpoint.                                                                    | `your-secret-api-key`                          |
-| `CHECK_CYCLE`             | How often the bot checks all domains, in seconds.                                                                                        | `600` (for 10 minutes)                         |
+| `CHECK_CYCLE`             | How often the bot checks all domains, in seconds.                                                                                        | `3600` (for 1 hour)                            |
 | `MAX_FAILURES`            | How many times to retry a failed domain check before marking it as down.                                                                 | `3`                                            |
 | `TIMEOUT`                 | The timeout for HTTP requests in seconds.                                                                                                | `30`                                           |
 | `LOG_FILE`                | Path to the log file for unreachable domains.                                                                                            | `logs/unreachable_domains.log`                 |
