@@ -90,8 +90,8 @@ class TelegramBot:
         """Ensure phone number starts with + (basic normalization)."""
         num = number.strip()
         if num.isdigit():
-            logger.warning(f"Phone number '{number}' seems to be missing '+'. Comparing as is, but add '+' in .env for robustness.")
-            return num
+            logger.info(f"Phone number '{number}' is missing '+'. Adding it for normalization.")
+            return "+" + num
         if not num.startswith('+'):
             return "+" + num
         return num
@@ -139,7 +139,9 @@ class TelegramBot:
             return
 
         phone_number = self._normalize_phone(contact.phone_number)
-        logger.info(f"Normalized phone number: {phone_number}")
+        logger.info(f"Received phone from Telegram: '{contact.phone_number}'")
+        logger.info(f"Normalized phone number: '{phone_number}'")
+        logger.info(f"Admin list from config: {self.config.admin_phone_numbers}")
 
         if phone_number in self.config.admin_phone_numbers:
             logger.info(f"Phone number {phone_number} MATCHES admin list. Adding chat ID {chat_id} as admin.")
