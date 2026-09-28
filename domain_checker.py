@@ -175,27 +175,30 @@ class DomainChecker:
                             logger.warning(f"Domain {domain} ({url}) health endpoint reported an ERROR: {error_message}. Treating as failure.")
                             return False # Plugin reported an error
                     except json.JSONDecodeError:
-                        logger.warning(f"Health endpoint {domain} ({url}) returned status 200 but not valid JSON. Treating as failure.")
-                        return False
+                        logger.debug(f"Health endpoint {domain} ({url}) returned status 200 but not valid JSON. Trusting root HTTP check instead.")
+                        return True
                 elif response.status_code == 401:
                     logger.warning(f"Health endpoint {domain} ({url}) returned 401 Unauthorized. Check API key in plugin/config.")
                     return False # API key issue, treat as failure for health check.
+                elif response.status_code == 404:
+                    logger.debug(f"Health endpoint {domain} ({url}) returned 404 (plugin likely not installed). Trusting root HTTP check instead.")
+                    return True
                 elif response.status_code >= 400:
-                    logger.warning(f"Health endpoint {domain} ({url}) returned server error (Status: {response.status_code}). Treating as failure.")
-                    return False
+                    logger.debug(f"Health endpoint {domain} ({url}) returned status {response.status_code}. Trusting root HTTP check instead.")
+                    return True
             except httpx.TimeoutException:
-                logger.warning(f"Health endpoint {domain} ({url}) timed out after {self.config.timeout}s. Treating as failure.")
-                return False
+                logger.debug(f"Health endpoint {domain} ({url}) timed out after {self.config.timeout}s. Trusting root HTTP check instead.")
+                return True
             except httpx.RequestError as e:
-                logger.warning(f"Error checking health endpoint {domain} ({url}): {e}. Treating as failure.")
-                return False
+                logger.debug(f"Error checking health endpoint {domain} ({url}): {e}. Trusting root HTTP check instead.")
+                return True
             except Exception as e:
-                logger.error(f"Unexpected error checking health endpoint {domain} ({url}): {e}. Treating as failure.")
-                return False
+                logger.debug(f"Unexpected error checking health endpoint {domain} ({url}): {e}. Trusting root HTTP check instead.")
+                return True
 
-        # If we reach here, it means the root domain was 200, but the health check endpoint failed for some reason.
-        logger.warning(f"WP Health Check endpoint for {domain} failed after root domain returned 200.")
-        return False
+        # If we reach here, none of the health-check URLs were reachable at all; root domain was already confirmed 200.
+        logger.debug(f"WP Health Check endpoint for {domain} unreachable, but root domain returned 200. Treating as reachable.")
+        return True
 
 
     def _log_unreachable(self, domain: str):
